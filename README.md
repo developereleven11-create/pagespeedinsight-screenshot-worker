@@ -1,0 +1,1 @@
+# pagespeedinsight-screenshot-worker

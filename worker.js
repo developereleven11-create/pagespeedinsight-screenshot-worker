@@ -36,7 +36,6 @@ async function takeScreenshot(browser, url, mode) {
     'section[aria-labelledby="performance"]'
   );
 
-  // Scroll into view for consistent capture
   await performanceSection.scrollIntoViewIfNeeded();
   await page.waitForTimeout(1500);
 
@@ -46,33 +45,11 @@ async function takeScreenshot(browser, url, mode) {
     `screenshots/${mode}/${filename}.png`
   );
 
-  // Screenshot only the performance section
   await performanceSection.screenshot({ path: savePath });
 
   await page.close();
 
   console.log(`Saved ${mode} performance screenshot for ${url}`);
-}
-
-
-  const psiUrl = `https://pagespeed.web.dev/analysis?url=${encodeURIComponent(
-    url
-  )}&form_factor=${mode}`;
-
-  await page.goto(psiUrl, { waitUntil: "networkidle" });
-
-  await page.waitForTimeout(12000);
-
-  const filename = sanitizeFilename(url);
-  const savePath = path.join(
-    __dirname,
-    `screenshots/${mode}/${filename}.png`
-  );
-
-  await page.screenshot({ path: savePath, fullPage: false });
-  await page.close();
-
-  console.log(`Saved ${mode} screenshot for ${url}`);
 }
 
 async function start() {
@@ -93,7 +70,7 @@ async function start() {
       await takeScreenshot(browser, url, "mobile");
       await takeScreenshot(browser, url, "desktop");
 
-      await new Promise((r) => setTimeout(r, 15000)); // throttle
+      await new Promise((r) => setTimeout(r, 15000));
     } catch (err) {
       console.error(`Failed for ${url}`, err.message);
     }
@@ -104,4 +81,3 @@ async function start() {
 }
 
 start();
-

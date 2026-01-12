@@ -1,1 +1,15 @@
-
+{
+  "name": "psi-screenshot-worker",
+  "version": "1.0.0",
+  "description": "Background worker to take PageSpeed Insights screenshots",
+  "main": "worker.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node worker.js"
+  },
+  "dependencies": {
+    "csv-parser": "^3.0.0",
+    "fs-extra": "^11.2.0",
+    "playwright": "^1.42.0"
+  }
+}

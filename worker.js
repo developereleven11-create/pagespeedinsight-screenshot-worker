@@ -18,10 +18,42 @@ async function readUrls() {
 
 async function takeScreenshot(browser, url, mode) {
   const page = await browser.newPage({
-    viewport: mode === "mobile"
-      ? { width: 375, height: 812 }
-      : { width: 1440, height: 900 }
+    viewport: { width: 1440, height: 900 }
   });
+
+  const psiUrl = `https://pagespeed.web.dev/analysis?url=${encodeURIComponent(
+    url
+  )}&form_factor=${mode}`;
+
+  await page.goto(psiUrl, { waitUntil: "networkidle" });
+
+  // Wait for Lighthouse performance section
+  await page.waitForSelector('section[aria-labelledby="performance"]', {
+    timeout: 60000
+  });
+
+  const performanceSection = await page.$(
+    'section[aria-labelledby="performance"]'
+  );
+
+  // Scroll into view for consistent capture
+  await performanceSection.scrollIntoViewIfNeeded();
+  await page.waitForTimeout(1500);
+
+  const filename = sanitizeFilename(url);
+  const savePath = path.join(
+    __dirname,
+    `screenshots/${mode}/${filename}.png`
+  );
+
+  // Screenshot only the performance section
+  await performanceSection.screenshot({ path: savePath });
+
+  await page.close();
+
+  console.log(`Saved ${mode} performance screenshot for ${url}`);
+}
+
 
   const psiUrl = `https://pagespeed.web.dev/analysis?url=${encodeURIComponent(
     url

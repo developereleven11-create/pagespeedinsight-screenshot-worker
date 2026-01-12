@@ -22,7 +22,8 @@ async function readUrls() {
 }
 
 /**
- * Capture PSI performance section screenshot
+ * Capture PageSpeed Insights performance screenshot
+ * Uses desktop viewport for both mobile & desktop scores
  */
 async function takeScreenshot(browser, url, mode) {
   const page = await browser.newPage({
@@ -35,14 +36,16 @@ async function takeScreenshot(browser, url, mode) {
 
   await page.goto(psiUrl, { waitUntil: "networkidle" });
 
-  // Wait until Lighthouse UI finishes rendering
-  await page.waitForSelector('div[role="tabpanel"]', {
-    timeout: 90000
-  });
+  // Wait for the ACTIVE Lighthouse tab only
+  await page.waitForSelector(
+    'div[role="tabpanel"][data-tab-panel-active="true"]',
+    { timeout: 120000 }
+  );
 
-  const performanceSection = await page.$('div[role="tabpanel"]');
+  const performanceSection = await page.$(
+    'div[role="tabpanel"][data-tab-panel-active="true"]'
+  );
 
-  // Scroll into view for stable capture
   await performanceSection.scrollIntoViewIfNeeded();
   await page.waitForTimeout(1500);
 
@@ -61,7 +64,7 @@ async function takeScreenshot(browser, url, mode) {
 
 /**
  * Main runner
- * Launches a fresh browser per URL (memory-safe)
+ * One browser per URL (memory-safe for small droplets)
  */
 async function start() {
   await ensureDirs();
@@ -90,7 +93,7 @@ async function start() {
       await browser.close();
       browser = null;
 
-      // Throttle to avoid Google blocking
+      // Throttle to avoid PSI rate limiting
       await new Promise((r) => setTimeout(r, 15000));
     } catch (err) {
       console.error(`Failed for ${url}`, err.message);

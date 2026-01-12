@@ -36,18 +36,23 @@ async function takeScreenshot(browser, url, mode) {
 
   await page.goto(psiUrl, { waitUntil: "networkidle" });
 
-  // Wait for the ACTIVE Lighthouse tab only
+  // 1. Wait for active Lighthouse tab
   await page.waitForSelector(
     'div[role="tabpanel"][data-tab-panel-active="true"]',
     { timeout: 120000 }
   );
 
-  const performanceSection = await page.$(
-    'div[role="tabpanel"][data-tab-panel-active="true"]'
+  // 2. Wait for Performance metrics section inside the active tab
+  const performanceSection = await page.waitForSelector(
+    'section[aria-labelledby="performance"]',
+    { timeout: 120000 }
   );
 
+  // 3. Scroll metrics into view (this is the key fix)
   await performanceSection.scrollIntoViewIfNeeded();
-  await page.waitForTimeout(1500);
+
+  // 4. Allow PSI animations & numbers to settle
+  await page.waitForTimeout(2000);
 
   const filename = sanitizeFilename(url);
   const savePath = path.join(
@@ -55,12 +60,14 @@ async function takeScreenshot(browser, url, mode) {
     `screenshots/${mode}/${filename}.png`
   );
 
+  // 5. Screenshot ONLY the metrics section
   await performanceSection.screenshot({ path: savePath });
 
   await page.close();
 
   console.log(`Saved ${mode} performance screenshot for ${url}`);
 }
+
 
 /**
  * Main runner

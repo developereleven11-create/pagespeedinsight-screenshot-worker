@@ -42,22 +42,23 @@ async function takeScreenshot(browser, url, mode) {
     { timeout: 120000 }
   );
 
-  // 2. Wait for performance section to exist
+  // 2. Wait for Performance section
   await page.waitForSelector(
     'section[aria-labelledby="performance"]',
     { timeout: 120000 }
   );
 
-  // 3. Force scroll DOWN to where metrics are rendered
-  await page.evaluate(() => {
-    window.scrollTo({
-      top: 600,
-      behavior: "instant"
-    });
-  });
+  // 3. Wait until numeric metrics are rendered
+  const metricsGrid = await page.waitForSelector(
+    'div[data-testid="metrics"]',
+    { timeout: 120000 }
+  );
 
-  // 4. Give PSI time to render numeric metrics
-  await page.waitForTimeout(2500);
+  // 4. Scroll metrics into perfect view
+  await metricsGrid.scrollIntoViewIfNeeded();
+
+  // 5. Let layout + numbers settle
+  await page.waitForTimeout(2000);
 
   const filename = sanitizeFilename(url);
   const savePath = path.join(
@@ -65,7 +66,7 @@ async function takeScreenshot(browser, url, mode) {
     `screenshots/${mode}/${filename}.png`
   );
 
-  // 5. Screenshot the visible viewport (now metrics are visible)
+  // 6. Capture viewport with metrics visible
   await page.screenshot({
     path: savePath,
     fullPage: false

@@ -42,17 +42,22 @@ async function takeScreenshot(browser, url, mode) {
     { timeout: 120000 }
   );
 
-  // 2. Wait for Performance metrics section inside the active tab
-  const performanceSection = await page.waitForSelector(
+  // 2. Wait for performance section to exist
+  await page.waitForSelector(
     'section[aria-labelledby="performance"]',
     { timeout: 120000 }
   );
 
-  // 3. Scroll metrics into view (this is the key fix)
-  await performanceSection.scrollIntoViewIfNeeded();
+  // 3. Force scroll DOWN to where metrics are rendered
+  await page.evaluate(() => {
+    window.scrollTo({
+      top: 600,
+      behavior: "instant"
+    });
+  });
 
-  // 4. Allow PSI animations & numbers to settle
-  await page.waitForTimeout(2000);
+  // 4. Give PSI time to render numeric metrics
+  await page.waitForTimeout(2500);
 
   const filename = sanitizeFilename(url);
   const savePath = path.join(
@@ -60,8 +65,11 @@ async function takeScreenshot(browser, url, mode) {
     `screenshots/${mode}/${filename}.png`
   );
 
-  // 5. Screenshot ONLY the metrics section
-  await performanceSection.screenshot({ path: savePath });
+  // 5. Screenshot the visible viewport (now metrics are visible)
+  await page.screenshot({
+    path: savePath,
+    fullPage: false
+  });
 
   await page.close();
 
